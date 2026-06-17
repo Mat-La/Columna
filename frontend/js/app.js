@@ -1,5 +1,12 @@
 // ========== WEBSOCKET & RÉSEAU ==========
 let myRole = null; // Stockera 'white', 'black', ou 'spectator'
+// 1. 🔒 Création de la "Carte d'Identité" (elle survit au rafraîchissement F5)
+let playerId = sessionStorage.getItem('columna_player_id');
+if (!playerId) {
+    // S'il n'en a pas, on lui crée un ID aléatoire
+    playerId = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('columna_player_id', playerId);
+}
 // 1. On récupère l'ID de la partie dans l'URL (ex: ?room=A8F3K)
 const urlParams = new URLSearchParams(window.location.search);
 const roomID = urlParams.get('room');
@@ -11,7 +18,7 @@ if (!roomID) {
 }
 
 // 2. On ouvre la connexion vers le serveur Python
-const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}`);
+const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}&player_id=${playerId}`);
 
 socket.onopen = function() {
     console.log(`Connecté au serveur Python sur le salon : ${roomID}`);
