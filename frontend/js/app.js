@@ -11,7 +11,7 @@ if (!roomID) {
 }
 
 // 2. On ouvre la connexion vers le serveur Python
-const socket = new WebSocket(`ws://${window.location.hostname}:8000/ws/${roomID}?mode=${mode}`);
+const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}`);
 
 socket.onopen = function() {
     console.log(`Connecté au serveur Python sur le salon : ${roomID}`);
