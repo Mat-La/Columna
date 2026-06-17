@@ -21,7 +21,7 @@ body {
 font-family: "Jim Nightshade", cursive;
 margin: 0;
 padding: 20px;
-background-image: url("../../img/bamboo.jpg");
+background-image: url("../img/bamboo.jpg");
 background-size: cover;
 background-attachment: fixed;
 min-height: 100vh;
