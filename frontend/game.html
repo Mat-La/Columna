@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/columnacss.css"> 
+<title>Columna</title>
+</head>
+<body>
+<h1>COLUMNA</h1>
+<p class="subtitle">2 joueurs · Stratégie · 6×6</p>
+
+<div class="status-bar">
+  <div class="player-indicator" id="current-player-indicator">
+    <div class="pion-dot" id="current-pion-dot"></div>
+    <span class="player-name" id="current-player-name"></span>
+  </div>
+  <div class="phase-label">
+    <strong id="phase-title"></strong>
+    <span id="phase-desc"></span>
+  </div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="score-panel" id="score-panel">
+  <div class="score-card" id="score-white">
+    <div class="score-card-header">
+      <div class="pion-dot white"></div>
+      <span class="score-card-name">Blancs</span>
+    </div>
+    <div class="score-breakdown" id="score-breakdown-white"></div>
+  </div>
+  <div class="score-card" id="score-black">
+    <div class="score-card-header">
+      <div class="pion-dot black"></div>
+      <span class="score-card-name">Noirs</span>
+    </div>
+    <div class="score-breakdown" id="score-breakdown-black"></div>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn" id="btn-cancel" onclick="cancelSelection()">Annuler sélection</button>
+  <button class="btn danger" onclick="restartGame()">Nouvelle partie</button>
+</div>
+
+<details>
+  <summary>Règles du jeu</summary>
+  <p><strong>But :</strong> Avoir le plus de pions sur les piles les plus hautes en fin de partie.</p>
+  <p><strong>Chaque tour (2 actions dans l'ordre) :</strong></p>
+  <ol>
+    <li><strong>Déplacer un pion</strong> : vers la première pile occupée en face dans une direction orthogonale (pas de case vide, pas de case occupée par un autre pion).</li>
+    <li><strong>Empiler des dalles</strong> : choisir une pile sans pion, l'empiler sur la première pile sans pion rencontrée dans une direction orthogonale. Maximum 5 dalles par pile. La case de départ devient vide.</li>
+  </ol>
+  <p><strong>Fin :</strong> Quand un joueur ne peut plus jouer. Le vainqueur est celui avec le plus de pions sur les piles de 5 dalles, puis 4, puis 3, etc.</p>
+</details>
+
+<!-- Modal fin de partie -->
+<div class="modal-overlay" id="end-modal">
+  <div class="modal">
+    <h2 id="modal-title"></h2>
+    <p id="modal-body"></p>
+    <button class="btn" onclick="restartGame()">Rejouer</button>
+  </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

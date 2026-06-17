@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Jim+Nightshade&display=swap');
+
+:root {
+--stone-light: #e8e0d0;
+--stone-mid: #c8bfad;
+--stone-dark: #9a9082;
+--white-pion: #f5f0e8;
+--black-pion: #2a2025;
+--text: #3a2e1a;
+--text-dim: #7a6848;
+--surface: rgba(255, 235, 205, 0.88);
+--surface2: rgba(255, 235, 205, 0.65);
+--border: rgba(100, 70, 20, 0.3);
+--gold: #7a4e10;
+--gold-dim: #b08040;
+}
+
+body {
+font-family: "Jim Nightshade", cursive;
+margin: 0;
+padding: 20px;
+background-image: url("../../img/bamboo.jpg");
+background-size: cover;
+background-attachment: fixed;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+user-select: none;
+color: var(--text);
+}
+
+h1 {
+text-align: center;
+font-size: clamp(50px, 8vw, 80px);
+margin: 10px 0 16px 0;
+background-color: blanchedalmond;
+border-radius: 10px;
+padding: 4px 30px;
+color: var(--gold);
+font-weight: 400;
+letter-spacing: 0.05em;
+width: 100%;
+max-width: 580px;
+}
+
+h2 {
+text-align: center;
+font-size: 2rem;
+letter-spacing: 0.15em;
+color: var(--text-dim);
+background-color: blanchedalmond;
+border-radius: 8px;
+padding: 2px 16px;
+margin-bottom: 16px;
+}
+
+.choixpartie {
+    display: flex;
+    flex-direction: row; 
+    gap: 30px; 
+    background-color: blanchedalmond;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 1.5rem;
+    margin-top: 50px;
+}
