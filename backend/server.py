@@ -40,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             "turn": "white",
             "phase": "move",
             "mode": mode,
-            "ia": Player(color="black", IA=True) if mode == "ia" else None # L'IA joue les Noirs
+            "ia": Player(color="black", IA=True) if mode == "ia" else None, # L'IA joue les Noirs
             "ws_white": None, # 🔒 On prépare une place précise pour le joueur Blanc
             "ws_black": None  # 🔒 On prépare une place précise pour le joueur Noir
         }
