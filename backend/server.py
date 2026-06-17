@@ -41,6 +41,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             "phase": "move",
             "mode": mode,
             "ia": Player(color="black", IA=True) if mode == "ia" else None # L'IA joue les Noirs
+            "ws_white": None, # 🔒 On prépare une place précise pour le joueur Blanc
+            "ws_black": None  # 🔒 On prépare une place précise pour le joueur Noir
         }
     
     # 1. Attribuer les couleurs
@@ -57,6 +59,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             role = "black"
         else:
             role = "spectator"
+    # 🔒 On installe les joueurs officiels à leur place
+    if role == "white":
+        parties[room_id]["ws_white"] = websocket
+    elif role == "black":
+        parties[room_id]["ws_black"] = websocket
             
     parties[room_id]["clients"].append(websocket)
 
@@ -71,6 +78,12 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             data = await websocket.receive_json()
             
             if data["action"] in ["move", "stack"]:
+                if parties[room_id]["turn"] == "white" and websocket != parties[room_id].get("ws_white"):
+                    continue # On ignore totalement l'action
+                if parties[room_id]["turn"] == "black" and websocket != parties[room_id].get("ws_black"):
+                    continue # On ignore totalement l'action
+                    
+                # Si on arrive ici, c'est que c'est le bon joueur. On applique le coup !
                 parties[room_id]["board"].move(tuple(data["from"]), tuple(data["to"]))
                 
                 if data["action"] == "move":
