@@ -5,7 +5,7 @@ from board import Board
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-PROFONDEUR = 2
+PROFONDEUR = 1
 
 # distance :  |   0   |   1   |   2   |   3   |   4+
 
