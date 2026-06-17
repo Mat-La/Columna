@@ -23,9 +23,16 @@ socket.onmessage = function(event) {
     console.log("Mise à jour reçue du serveur :", response);
 
     if (response.status === "sync" || response.status === "update") {
+        // On sauvegarde le rôle quand le serveur nous l'envoie
         if (response.role) {
             myRole = response.role;
-            alert("Vous jouez les : " + (myRole === 'white' ? 'Blancs' : 'Noirs'));
+            
+            // 🍿 NOUVEAU : Message spécifique selon le rôle
+            if (myRole === 'spectator') {
+                alert("La partie est déjà pleine ! Vous êtes en Mode Spectateur 🍿");
+            } else {
+                alert("Vous jouez les : " + (myRole === 'white' ? 'Blancs' : 'Noirs'));
+            }
         }
         const serverState = response.state;
         currentPlayer = serverState.turn;
