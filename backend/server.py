@@ -27,9 +27,9 @@ def get_board_state(partie):
         "phase": partie["phase"]
     }
 
-# On ajoute le paramètre "mode" à la connexion
+# 🔒 On ajoute player_id aux paramètres attendus
 @app.websocket("/ws/{room_id}")
-async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "multi"):
+async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "multi", player_id: str = ""):
     await websocket.accept()
     
     if room_id not in parties:
@@ -40,32 +40,47 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             "turn": "white",
             "phase": "move",
             "mode": mode,
-            "ia": Player(color="black", IA=True) if mode == "ia" else None, # L'IA joue les Noirs
-            "ws_white": None, # 🔒 On prépare une place précise pour le joueur Blanc
-            "ws_black": None  # 🔒 On prépare une place précise pour le joueur Noir
+            "ia": Player(color="black", IA=True) if mode == "ia" else None,
+            "ws_white": None, 
+            "ws_black": None,
+            "id_white": None, # 🔒 Mémorise l'ID du joueur Blanc
+            "id_black": None  # 🔒 Mémorise l'ID du joueur Noir
         }
     
-    # 1. Attribuer les couleurs
-    nb_joueurs = len(parties[room_id]["clients"])
-    
-    if parties[room_id]["mode"] == "ia":
-        # En mode IA, le joueur humain est toujours Blanc, et personne d'autre ne peut jouer
-        role = "white" if nb_joueurs == 0 else "spectator"
-    else:
-        # En mode Multi, Blanc puis Noir
-        if nb_joueurs == 0:
+    p = parties[room_id]
+    role = "spectator"
+
+    # ==========================================
+    # 1. 🔒 TENTATIVE DE RECONNEXION (Si F5)
+    # ==========================================
+    if player_id:
+        if player_id == p["id_white"]:
             role = "white"
-        elif nb_joueurs == 1:
+            p["ws_white"] = websocket  # On rebranche son nouveau câble
+        elif player_id == p["id_black"]:
             role = "black"
-        else:
-            role = "spectator"
-    # 🔒 On installe les joueurs officiels à leur place
-    if role == "white":
-        parties[room_id]["ws_white"] = websocket
-    elif role == "black":
-        parties[room_id]["ws_black"] = websocket
-            
-    parties[room_id]["clients"].append(websocket)
+            p["ws_black"] = websocket  # On rebranche son nouveau câble
+
+    # ==========================================
+    # 2. 🔒 NOUVELLE CONNEXION (S'il n'a pas été reconnu)
+    # ==========================================
+    if role == "spectator":
+        if mode == "ia":
+            if p["id_white"] is None:
+                role = "white"
+                p["ws_white"] = websocket
+                p["id_white"] = player_id
+        else: # Mode Multijoueur
+            if p["id_white"] is None:
+                role = "white"
+                p["ws_white"] = websocket
+                p["id_white"] = player_id
+            elif p["id_black"] is None:
+                role = "black"
+                p["ws_black"] = websocket
+                p["id_black"] = player_id
+                
+    p["clients"].append(websocket)
 
     try:
         await websocket.send_json({
