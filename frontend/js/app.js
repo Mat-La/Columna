@@ -15,7 +15,7 @@ if (!roomID) {
   window.location.href = "index.html";
 }
 
-// Connexion vers le serveur Python
+// 2. On ouvre la connexion vers le serveur Python
 const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}&player_id=${playerId}`);
 
 socket.onopen = function () {
