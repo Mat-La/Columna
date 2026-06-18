@@ -3,9 +3,6 @@ import asyncio
 import json
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-import json
-import random
 
 from board import Board
 from player import Player
