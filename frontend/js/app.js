@@ -28,6 +28,22 @@ socket.onmessage = function(event) {
     // On traduit le texte JSON reçu en objet JavaScript
     const response = JSON.parse(event.data);
     console.log("Mise à jour reçue du serveur :", response);
+    // ==========================================
+    // 🚨 NOUVEAU : GESTION DES DÉCONNEXIONS
+    // ==========================================
+    if (response.status === "opponent_disconnected") {
+        alert("⚠️ Votre adversaire a été déconnecté ! S'il ne revient pas d'ici 1 minute, vous remportez la partie.");
+        return; // On arrête là
+    } 
+    else if (response.status === "opponent_reconnected") {
+        alert("✅ Votre adversaire est de retour ! Le combat reprend.");
+        return;
+    }
+    else if (response.status === "victory_by_abandon") {
+        gameOver = true; // On bloque le plateau en JavaScript
+        alert(response.message);
+        return;
+    }
 
     if (response.status === "sync" || response.status === "update") {
         // On sauvegarde le rôle quand le serveur nous l'envoie
