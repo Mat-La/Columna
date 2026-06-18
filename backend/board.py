@@ -1,7 +1,5 @@
-try:
-    import pygame
-except ImportError:
-    pygame = None
+import pygame
+
 # Gère le plateau de jeu
 # Deplacements + verifications des coups possibles
 
@@ -24,13 +22,14 @@ class Board:
         self.black_pawns = [(0, 1), (3, 2), (3, 5), (5, 0)]
         
         # On charge les images de Pygame SEULEMENT si on a un écran (jeu local)
-        if self.screen and pygame is not None:
+        if self.screen:
             self.board_image = pygame.image.load("img/board.jpg")
             self.dalle_images = [
                 pygame.image.load(f"img/dalle{i}.jpg") for i in range(1, 6)
             ]
             self.black_pawns_image = pygame.image.load("img/pion_noir.png")
             self.white_pawns_image = pygame.image.load("img/pion_blanc.png")
+
     # une fonction display -> affiche le plateau, dalles et pion
     def display(self):
         self.screen.blit(self.board_image, (0, 0))

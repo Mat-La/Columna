@@ -70,6 +70,21 @@ class Player:
             # vboard = board.copy()
             board.move(move[0], move[1])
             all_stacks_possible = board.get_all_slabs_stack()
+            if not all_stacks_possible:
+                res = board.get_result()
+                if res == self.color:
+                    u = 10000
+                elif res == "draw":
+                    u = 0
+                else:
+                    u = -10000
+                if u == None or u_min > u:
+                    a = (move, None)
+                    u = u_min
+                if u >= beta:
+                    board.undo_move(move[0], move[1])
+                    return (u, a)
+                alpha = max(alpha, u)  
             j=0
             for stack in all_stacks_possible:
                 if profondeur == PROFONDEUR:
@@ -108,6 +123,21 @@ class Player:
             # vboard = board.copy()
             board.move(move[0], move[1])
             all_stacks_possible = board.get_all_slabs_stack()
+            if not all_stacks_possible:
+                res = board.get_result()
+                if res == self.color:
+                    u = 10000
+                elif res == "draw":
+                    u = 0
+                else:
+                    u = -10000
+                if u == None or u_max < u:
+                    a = (move, None)
+                    u = u_max
+                if u <= alpha:
+                    board.undo_move(move[0], move[1])
+                    return (u, a)
+                beta = min(beta, u)
             for stack in all_stacks_possible:
                 # vvboard = vboard.copy()
                 nb_dalles = board.move(stack[0], stack[1])

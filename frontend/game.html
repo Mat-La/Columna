@@ -5,66 +5,114 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="css/columnacss.css"> 
 <title>Columna</title>
+<link rel="icon" type="image/png" href="../img/columna.svg">
 </head>
 <body>
-<h1>COLUMNA</h1>
-<p class="subtitle">2 joueurs · Stratégie · 6×6</p>
+<div class="game-header">
 
-<div class="status-bar">
-  <div class="player-indicator" id="current-player-indicator">
-    <div class="pion-dot" id="current-pion-dot"></div>
-    <span class="player-name" id="current-player-name"></span>
+  <div class="mini-title-container">
+    <h1 class="mini-title">COLUMNA</h1>
   </div>
-  <div class="phase-label">
-    <strong id="phase-title"></strong>
-    <span id="phase-desc"></span>
-  </div>
-</div>
 
-<div class="board-wrap">
-  <div class="board" id="board"></div>
-</div>
-
-<div class="score-panel" id="score-panel">
-  <div class="score-card" id="score-white">
-    <div class="score-card-header">
-      <div class="pion-dot white"></div>
-      <span class="score-card-name">Blancs</span>
+  <div class="status-bar">
+    <div class="player-indicator" id="current-player-indicator">
+      <div class="pion-dot" id="current-pion-dot"></div>
+      <span class="player-name" id="current-player-name"></span>
     </div>
-    <div class="score-breakdown" id="score-breakdown-white"></div>
-  </div>
-  <div class="score-card" id="score-black">
-    <div class="score-card-header">
-      <div class="pion-dot black"></div>
-      <span class="score-card-name">Noirs</span>
+    <div class="phase-label">
+      <strong id="phase-title"></strong>
+      <span id="phase-desc"></span>
     </div>
-    <div class="score-breakdown" id="score-breakdown-black"></div>
   </div>
+
+  <div class="room-badge-container">
+    <div class="room-badge" id="room-badge-click" onclick="copierID()" style="cursor: pointer;">
+      ID : <strong id="room-display">Chargement...</strong>
+    </div>
+    <div class="tooltip-id" id="tooltip-message">Partage cet ID à ton futur adversaire.</div>
+  </div>
+
 </div>
 
+<div class="jeu-container">
+
+  <div class="side-panel-scores">
+
+    <div class="score-card" id="score-white">
+      <div class="score-card-header">
+        <div class="pion-dot white"></div>
+        <span class="score-card-name" id="score-card-name-white">Blancs</span>
+      </div>
+      <div class="score-breakdown" id="score-breakdown-white"></div>
+    </div>
+
+    <div class="score-card" id="score-black">
+      <div class="score-card-header">
+        <div class="pion-dot black"></div>
+        <span class="score-card-name" id="score-card-name-black">Noirs</span>
+      </div>
+      <div class="score-breakdown" id="score-breakdown-black"></div>
+    </div>
+
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="side-panel-rules">
+    <details>
+      <summary>Règles du jeu</summary>
+      <p><strong>But du jeu :</strong> Avoir le plus de pions sur les piles les plus hautes en fin de partie.</p>
+      <p><strong>Chaque tour, le joueur doit effectuer 2 actions obligatoires dans cet ordre :</strong></p>
+      <ol>
+        <li><strong>Déplacer un pion</strong> : Un des quatre pions doit être déplacé vers la première pile vide en face
+          dans une direction orthogonale (pas de case occupée par un autre pion, pas de case vide).</li>
+        <li><strong>Empiler des dalles</strong> : Choisir une pile sans pion, l'empiler sur la première pile sans pion
+          rencontrée dans une direction orthogonale. Maximum 5 dalles par pile. La case de départ devient vide.</li>
+      </ol>
+      <p><strong>Fin :</strong> Quand un joueur ne peut plus jouer, c'est à dire qu'une des deux actions obligatoire ne peut
+        pas être effectuée. Le vainqueur est celui avec le plus de pions sur les piles de 5 dalles, puis 4, puis 3, etc.</p>
+      <p><strong>Consulter</strong> la <a href="https://bultel.info/Columna.html" title="règle officielle et complète du jeu" 
+        target="_blank">règle officielle du jeu</a>.</p>
+    </details>
+  </div>
+
+</div>
 <div class="actions">
   <button class="btn" id="btn-cancel" onclick="cancelSelection()">Annuler sélection</button>
-  <button class="btn danger" onclick="restartGame()">Nouvelle partie</button>
+  <button class="btn" id="btn-home" onclick="window.location.href='index.html'">Accueil</button>
+  <button class="btn danger" id="btn-abandon" onclick="abandonnerPartie()">Abandonner</button>
+  <!-- <button onclick="endGame()">Test</button> -->
 </div>
 
-<details>
-  <summary>Règles du jeu</summary>
-  <p><strong>But :</strong> Avoir le plus de pions sur les piles les plus hautes en fin de partie.</p>
-  <p><strong>Chaque tour (2 actions dans l'ordre) :</strong></p>
-  <ol>
-    <li><strong>Déplacer un pion</strong> : vers la première pile occupée en face dans une direction orthogonale (pas de case vide, pas de case occupée par un autre pion).</li>
-    <li><strong>Empiler des dalles</strong> : choisir une pile sans pion, l'empiler sur la première pile sans pion rencontrée dans une direction orthogonale. Maximum 5 dalles par pile. La case de départ devient vide.</li>
-  </ol>
-  <p><strong>Fin :</strong> Quand un joueur ne peut plus jouer. Le vainqueur est celui avec le plus de pions sur les piles de 5 dalles, puis 4, puis 3, etc.</p>
-</details>
+<div class="modal-overlay" id="abandon-modal">
+  <div class="modal">
+    <h2>Abandonner ?</h2>
+    <p>Êtes-vous sûr de vouloir abandonner ?<br> Un abandon entraîne une défaite immédiate.</p>
+    <div style="display: flex; gap: 15px; margin-top: 10px;">
+      <button class="btn" onclick="fermerModalAbandon()">Annuler</button>
+      <button class="btn danger" onclick="confirmerAbandonNetwork()">Abandonner</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="disconnect-modal">
+  <div class="modal">
+    <button class="modal-close" type="button" onclick="closeDisconnectModal()" aria-label="Fermer">×</button>
+    <h2 id="disconnect-title"></h2>
+    <p id="disconnect-body"></p>
+  </div>
+</div>
 
 <!-- Modal fin de partie -->
 <div class="modal-overlay" id="end-modal">
   <div class="modal">
-    <h2 id="modal-title"></h2>
+    <button class="modal-close" type="button" onclick="closeEndModal()" aria-label="Fermer">×</button>
+    <h2 id="modal-title">Partie terminée</h2>
+    <img src="../img/panda.png" alt="" height="200px"/>
     <p id="modal-body"></p>
-    <button class="btn" onclick="restartGame()">Rejouer</button>
-  </div>
+  <button class="btn" onclick="window.location.href='index.html'">Retour à l'accueil</button></div>
 </div>
 <script src="js/app.js"></script>
 </body>

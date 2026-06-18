@@ -1,24 +1,106 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const RENDER_WS_URL = "wss://columna.onrender.com"; // TODO Remplacer par l'URL de Render
+
+  //console.log("[Network] Tentative de connexion au serveur Render...");
+  const checkSocket = new WebSocket(RENDER_WS_URL);
+
+  const banner = document.getElementById("server-status-banner");
+  const bannerText = document.getElementById("server-status-text");
+
+  checkSocket.onopen = () => {
+    //console.log("[Network] Serveur Render activé et connecté !");
+
+    if (banner && bannerText) {
+      banner.classList.remove("waiting");
+      banner.classList.add("connected");
+      bannerText.innerHTML = "Serveur de jeu en ligne ! Prêt à jouer.";
+
+      setTimeout(() => {
+        banner.classList.add("hidden-soft");
+        console.log("[Front-End] Bandeau replié avec fluidité.");
+      }, 2000);
+    }
+  };
+
+  checkSocket.onerror = (error) => {
+    //console.error("[Network] Erreur de liaison avec Render :", error);
+    if (bannerText) {
+      bannerText.innerText =
+        "Impossible de joindre le serveur. Veuillez réessayer plus tard.";
+    }
+  };
+});
+
 // Fonction pour générer un ID unique aléatoire (ex: 8x3f9a)
 function generateRoomID() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+let hideJoinInputTimeout = null;
+const joinInput = document.getElementById("form-rejoindre");
+const submitButton = document.getElementById("btn-submit-rejoindre");
+
+function hideJoinInput() {
+  if (!joinInput.value.trim()) {
+    joinInput.type = "hidden";
+    submitButton.classList.remove("visible");
+  }
+}
+
+function resetHideJoinInputTimer() {
+  if (hideJoinInputTimeout) {
+    clearTimeout(hideJoinInputTimeout);
+  }
+  hideJoinInputTimeout = setTimeout(hideJoinInput, 5000);
+}
+
+function joinRoom(event) {
+  if (event) event.preventDefault();
+  const roomID = joinInput.value;
+  joinInput.value = "";
+  console.log(roomID);
+  if (!roomID || !roomID.trim()) {
+    return false;
+  }
+  window.location.href = `game.html?room=${roomID.trim()}`;
+  return false;
 }
 
 // 1. Créer une partie
-document.getElementById("btn-creer").addEventListener("click", function() {
-    const roomID = generateRoomID();
-    window.location.href = `game.html?room=${roomID}`;
+document.getElementById("btn-creer").addEventListener("click", function () {
+  const roomID = generateRoomID();
+  window.location.href = `game.html?room=${roomID}`;
 });
 
 // 2. Rejoindre une partie
-document.getElementById("btn-rejoindre").addEventListener("click", function() {
-    const roomID = prompt("Entrez l'ID de la partie (ex: A8F3K) :");
-    if (roomID) {
-        window.location.href = `game.html?room=${roomID.trim()}`;
-    }
+document.getElementById("btn-rejoindre").addEventListener("click", function () {
+  joinInput.type = "text";
+  submitButton.classList.add("visible");
+  joinInput.focus();
+  resetHideJoinInputTimer();
 });
 
+joinInput.addEventListener("input", resetHideJoinInputTimer);
+joinInput.addEventListener("focus", resetHideJoinInputTimer);
+
 // 3. Jouer contre l'IA
-document.getElementById("btn-ia").addEventListener("click", function() {
-    const roomID = generateRoomID();
-    window.location.href = `game.html?room=${roomID}&mode=ia`;
+document.getElementById("btn-ia").addEventListener("click", function () {
+  const roomID = generateRoomID();
+  window.location.href = `game.html?room=${roomID}&mode=ia`;
+});
+
+document.querySelectorAll(".btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    button.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(.94)" },
+        { transform: "scale(1)" },
+      ],
+      {
+        duration: 180,
+        easing: "ease-out",
+      },
+    );
+  });
 });

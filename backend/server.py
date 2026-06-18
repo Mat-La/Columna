@@ -1,7 +1,11 @@
+import random
+import asyncio
+import json
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import json
+import random
 
 from board import Board
 from player import Player
@@ -24,7 +28,9 @@ def get_board_state(partie):
         "white_pawns": partie["board"].white_pawns,
         "black_pawns": partie["board"].black_pawns,
         "turn": partie["turn"],
-        "phase": partie["phase"]
+        "phase": partie["phase"],
+        "last_pion_move": partie.get("last_pion_move"),
+        "last_stack_move": partie.get("last_stack_move")
     }
 
 # ==========================================
@@ -40,8 +46,8 @@ async def abandon_timer(room_id, disconnected_role):
                 pass
                 
     try:
-        # 2. ⏱️ On patiente 1 minute
-        await asyncio.sleep(60) 
+        # 2. ⏱️ On patiente 30 secondes
+        await asyncio.sleep(30) 
         
         # 3. 🏁 Si on arrive ici, les 60s sont écoulées, forfait !
         if room_id in parties:
@@ -51,7 +57,6 @@ async def abandon_timer(room_id, disconnected_role):
             new_state = {
                 "status": "victory_by_abandon",
                 "winner": winner,
-                "message": f"Victoire par forfait ! Les {disconnected_role}s ont fui le combat."
             }
             
             for client in parties[room_id]["clients"]:
@@ -66,12 +71,12 @@ async def abandon_timer(room_id, disconnected_role):
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "multi", player_id: str = ""):
     await websocket.accept()
-    
+    start_turn = random.choice(["white", "black"])
     if room_id not in parties:
         parties[room_id] = {
             "board": Board(screen=None),
             "clients": [],
-            "turn": "white",
+            "turn": start_turn,
             "phase": "move",
             "mode": mode,
             "ia": Player(color="black", IA=True) if mode == "ia" else None,
@@ -83,6 +88,20 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             "task_black": None  # ⏱️ Stocke le chrono du joueur Noir
         }
     
+    # 🤖 CAS SPÉCIAL : Si on joue contre l'IA, et que le hasard a choisi l'IA (Noirs) pour commencer :
+        if mode == "ia" and start_turn == "black":
+            ia = parties[room_id]["ia"]
+            le_board = parties[room_id]["board"]
+            # L'IA joue son tout premier coup instantanément, avant même que l'humain n'affiche la page
+            ia.take_action(le_board)
+            if getattr(ia, 'action', None):
+                m_act, s_act = ia.action
+                le_board.move(m_act[0], m_act[1])
+                parties[room_id]["last_pion_move"] = {"from": list(m_act[0]), "to": list(m_act[1])}
+                le_board.move(s_act[0], s_act[1])
+                parties[room_id]["last_stack_move"] = {"from": list(s_act[0]), "to": list(s_act[1])}
+                parties[room_id]["turn"] = "white" # La main passe à l'humain
+   
     p = parties[room_id]
     role = "spectator"
 
@@ -137,16 +156,37 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             
             if p["turn"] == "white" and websocket != p.get("ws_white"): continue
             if p["turn"] == "black" and websocket != p.get("ws_black"): continue
-            if p["phase"] == "game_over": continue # 🔒 Bloque les clics si la partie est finie
+            if p["phase"] == "game_over": continue 
+
+            if data["action"] == "abandon":
+                p["phase"] = "game_over"
+                abandon_role = data.get("role")
+                winner = "black" if abandon_role == "white" else "white"
+                
+                new_state = {
+                    "status": "victory_by_abandon",
+                    "winner": winner,
+                }
+                for client in p["clients"]:
+                    if websocket == client:
+                        continue
+                    try:
+                        await client.send_json(new_state)
+                    except Exception:
+                        pass
+                continue
                 
             if data["action"] in ["move", "stack"]:
                 p["board"].move(tuple(data["from"]), tuple(data["to"]))
                 
                 if data["action"] == "move":
                     p["phase"] = "stack"
+                    parties[room_id]["last_pion_move"] = {"from": data["from"], "to": data["to"]}
+                    parties[room_id]["last_stack_move"] = None
                 elif data["action"] == "stack":
                     p["phase"] = "move"
                     p["turn"] = "black" if p["turn"] == "white" else "white"
+                    parties[room_id]["last_stack_move"] = {"from": data["from"], "to": data["to"]}
                 
                 new_state = {
                     "status": "update",
@@ -163,7 +203,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                     if action:
                         move_action, stack_action = action
                         p["board"].move(move_action[0], move_action[1])
+                        parties[room_id]["last_pion_move"] = {"from": list(move_action[0]), "to": list(move_action[1])}
+                        
                         p["board"].move(stack_action[0], stack_action[1])
+                        parties[room_id]["last_stack_move"] = {"from": list(stack_action[0]), "to": list(stack_action[1])}
                         p["turn"] = "white"
                         p["phase"] = "move"
                         
@@ -177,13 +220,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
 # ... (Ceci est la fin de la boucle "while True:" et des actions du joueur)
 
     except Exception as e:
-        # On ignore les erreurs classiques de la boucle
         pass
         
     finally:
-        # ==========================================
-        # 🔌 QUAND UN CÂBLE SE DÉBRANCHE (Même si on ferme l'onglet d'un coup)
-        # ==========================================
         if websocket in p["clients"]:
             p["clients"].remove(websocket)
             
@@ -194,8 +233,5 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
         elif websocket == p.get("ws_black"):
             disc_role = "black"
             p["ws_black"] = None
-            
-        # Si c'est un vrai joueur qui vient de partir
-        if disc_role:
-            # 🚀 On délègue tout le travail à la nouvelle tâche (qui survit à la fermeture)
+        if disc_role and p["phase"] != "game_over":
             p[f"task_{disc_role}"] = asyncio.create_task(abandon_timer(room_id, disc_role))

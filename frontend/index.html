@@ -4,18 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/accueil.css"> 
-    <title>Accueil</title>
+    <title>Columna</title>
+    <link rel="icon" type="image/png" href="../img/columna.svg">
 </head>
 <body>
     <h1>COLUMNA</h1>
+    <div id="server-status-banner" class="server-banner waiting">
+        <span class="spinner">⏳</span>
+        <span id="server-status-text">Le serveur est en train de démarrer (environ 1 min d'attente maximum)...</span>
+    </div>
+    <div class="game-description">
+        <p class="tagline">Empilez et dominez !</p>
+        <p class="pitch">
+            Avec <strong>Columna</strong>, construisez des piliers avec votre adversaire, puis prenez-en le contrôle grâce à
+            vos pions.
+            Les règles sont simples et s'apprennent en cinq minutes, mais chaque partie révèle une profondeur stratégique
+            qui mettra vos talents de tacticien à l'épreuve.
+        </p>
+    </div>
     <h2>Choix de la partie</h2>
     
-    <div class="choixpartie">
+    <section class="buttons">
         <!-- Remplacement des liens par des boutons pour déclencher le JS -->
-        <button id="btn-creer">Créer une partie multijoueur</button>
-        <button id="btn-rejoindre">Rejoindre une partie multijoueur</button>
-        <button id="btn-ia">Jouer contre l'ordinateur</button>
-    </div>
+        <button class="btn brain" id="btn-creer"><img src="../img/wand.jpg " alt="" class="button_image" ><span>Créer une partie multijoueur</span></button>
+        <button class="btn brain" id="btn-rejoindre"><img src="../img/door.png " alt="" class="button_image" ><span>Rejoindre une partie multijoueur</span></button>
+        <button class="btn brainn" id="btn-ia"><img src="../img/robot.png " alt="" class="button_image" ><span>Jouer contre l'ordinateur</span></button>
+    </section>
+    <section style="margin-top: 2%;">
+        <form onsubmit="return joinRoom(event)" style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+            <input id="form-rejoindre" type="hidden">
+            <button type="submit" class="btn brain" id="btn-submit-rejoindre">Rejoindre</button>
+        </form>
+    </section>
+    
     <script src="js/accueil.js"></script>
+
+    <details>
+        <summary>Règles du jeu</summary>
+        <p><strong>But du jeu :</strong> Avoir le plus de pions sur les piles les plus hautes en fin de partie.</p>
+        <p><strong>Chaque tour, le joueur doit effectuer 2 actions obligatoires dans cet ordre :</strong></p>
+        <ol>
+            <li><strong>Déplacer un pion</strong> : Un des quatre pions doit être déplacé vers la première pile vide en face
+                dans une direction orthogonale (pas de case occupée par un autre pion, pas de case vide).</li>
+            <li><strong>Empiler des dalles</strong> : Choisir une pile sans pion, l'empiler sur la première pile sans pion
+                rencontrée dans une direction orthogonale. Maximum 5 dalles par pile. La case de départ devient vide.</li>
+        </ol>
+        <p><strong>Fin :</strong> Quand un joueur ne peut plus jouer, c'est à dire qu'une des deux actions obligatoire ne
+            peut pas être effectuée. Le vainqueur est celui avec le plus de pions sur les piles de 5 dalles, puis 4, puis 3,
+            etc.
+        </p>
+        <p><strong>Consulter</strong> la <a href="https://bultel.info/Columna.html" title="règle officielle et complète du jeu" target="_blank">règle officielle du jeu</a>.</p>
+    </details>
 </body>
 </html>

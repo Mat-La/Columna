@@ -19,7 +19,7 @@ body {
 font-family: "Jim Nightshade", cursive;
 margin: 0;
 padding: 20px;
-background-image: url("../img/bamboo.jpg");
+background-image: url("../../img/bamboo.png");
 background-size: cover;
 background-attachment: fixed;
 min-height: 100vh;
@@ -28,6 +28,11 @@ flex-direction: column;
 align-items: center;
 user-select: none;
 color: var(--text);
+width: 100vw;
+height: 100vh;
+box-sizing: border-box;
+overflow: hidden;
+overflow-y: auto;
 }
 
 h1 {
@@ -46,13 +51,13 @@ max-width: 580px;
 
 h2 {
 text-align: center;
-font-size: 2rem;
+font-size: 1.8rem;
 letter-spacing: 0.15em;
 color: var(--text-dim);
 background-color: blanchedalmond;
 border-radius: 8px;
-padding: 2px 16px;
-margin-bottom: 16px;
+padding: 8px 16px;
+margin-bottom: 30px;
 }
 
 .choixpartie {
@@ -63,5 +68,322 @@ margin-bottom: 16px;
     border-radius: 10px;
     padding: 10px 20px;
     font-size: 1.5rem;
-    margin-top: 50px;
+    margin-top: 0px;
+}
+
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.btn {
+  position: relative;
+  isolation: isolate;
+  min-height: 78px;
+  border: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  color: #7a6848;
+  background: #222;
+  font: 900 1.2rem Inter, jim Nightshade, sans-serif;
+  letter-spacing: 0.03em;
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.35);
+  display: inline-flex;
+  align-items: center;     
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.btn span {
+  position: relative;
+  z-index: 2;
+}
+
+/* The Brain */
+.brain {
+  background: blanchedalmond;
+  outline: 2px solid #7a6848;
+}
+
+.brain::before,
+.brain::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 2px solid #7a6848;
+  transform: scaleX(0);
+  transition: 0.35s ease;
+}
+
+.brain::after {
+  transform: scaleY(0);
+}
+
+.brain:hover::before,
+.brain:hover::after {
+  transform: scale(1);
+}
+
+.brainn {
+  background: blanchedalmond;
+  outline: 2px solid #7a6848;
+}
+
+.brainn::before,
+.brainn::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 2px solid #7a6848;
+  transform: scaleX(0);
+  transition: 0.35s ease;
+}
+
+.brainn::after {
+  transform: scaleY(0);
+}
+
+.brainn:hover::before,
+.brainn:hover::after {
+  transform: scale(1);
+}
+
+
+
+/* The Athlete */
+.athlete {
+  background: linear-gradient(135deg, #cea45c, blanchedalmond);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.athlete:hover {
+  transform: translateY(-4px);
+}
+
+.athlete:active {
+  transform: translateY(4px) scale(0.96);
+  box-shadow: 0 5px 0 #7f1d1d;
+}
+
+/* The Basket Case */
+.basket {
+  background: blanchedalmond;
+}
+
+.basket:hover {
+  animation: jitter 0.22s infinite;
+}
+
+.basket::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #7a6848, transparent);
+  opacity: 0;
+}
+
+.basket:hover::before {
+  opacity: 0.55;
+  animation: scan 0.7s linear infinite;
+}
+
+#btn-submit-rejoindre {
+  display: none;
+  min-height: 45px;
+  padding: 0 12px;
+  font: 700 0.85rem Inter, jim Nightshade, sans-serif;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+#btn-submit-rejoindre.visible {
+  display: inline-flex;
+}
+
+@keyframes jitter {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  25% {
+    transform: translate(2px, -1px);
+  }
+  50% {
+    transform: translate(-2px, 1px);
+  }
+  75% {
+    transform: translate(1px, 2px);
+  }
+}
+
+@keyframes scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.btn .button_image {
+  width: 40px;       
+  height: 40px;      
+  object-fit: contain; 
+
+}
+
+/* Style pour le champ de saisie de l'ID de partie */
+#form-rejoindre {
+  display: inline-block;
+  width: 220px;
+  max-width: calc(100% - 40px);
+  box-sizing: border-box;
+  padding: 10px 14px;
+  margin: 8px 0 0 8px;
+  font-size: 1rem;
+  font-family: "Jim Nightshade", cursive;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+}
+
+#form-rejoindre[type="hidden"] {
+  width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#form-rejoindre:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+details {
+width: 100%;
+max-width: 580px;
+background: var(--surface);
+border: 1px solid var(--border);
+border-radius: 10px;
+padding: 12px 16px;
+font-size: 1.2rem;
+line-height: 1.6;
+color: var(--text-dim);
+box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+margin-top: 0px;
+}
+summary {
+cursor: pointer;
+color: var(--gold);
+font-size: 1.2rem;
+letter-spacing: 0.06em;
+list-style: none;
+}
+summary::before { content: '▶ '; font-size: 0.9rem; }
+details[open] summary::before { content: '▼ '; }
+details p { margin-top: 8px; color: var(--text); }
+details ol { padding-left: 18px; margin-top: 4px; }
+details li { margin-bottom: 4px; }
+
+/* Bandeau d'état sur le serveur */
+.server-banner {
+  width: 100%;
+  max-width: 580px;
+  max-height: 100px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity 0.5s ease, max-height 0.5s ease, margin 0.5s ease, visibility 0.5s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.server-banner.waiting {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+}
+
+.server-banner.connected {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.server-banner .spinner {
+  display: inline-block;
+  animation: rotation 2s infinite linear;
+}
+
+.server-banner.hidden-soft {
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* Description du jeu */
+.game-description {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 24px;
+  max-width: 580px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0);
+  margin-top: 10px;
+  margin-bottom: 0px;
+  flex-shrink: 0;
+}
+
+.game-description .tagline {
+  font-size: 1.4rem;
+  color: var(--gold);
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  margin-top: 0px;
+}
+
+.game-description .pitch {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--text);
+  font-family: sans-serif;
+  margin: 0;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+@media (max-width: 650px) {
+  body {
+    overflow-x: auto;
+  }
 }
