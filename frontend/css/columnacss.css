@@ -50,8 +50,6 @@ width: 100%;
 max-width: 580px;
 }
 
-
-/* STATUS BAR */
 .game-header {
     display: flex;
     flex-direction: row;
@@ -110,12 +108,8 @@ max-width: 580px;
     text-align: center;
 }
 
-
-/* ========== ÉLARGISSEMENT DES PANNEAUX DE SCORE ========== */
-
 .score-card {
     min-width: 250px !important;
-    /* Augmenté de 180px à 250px pour éviter le retour à la ligne */
     max-width: 280px !important;
     padding: 12px 16px;
 }
@@ -123,23 +117,17 @@ max-width: 580px;
 .score-breakdown {
     display: flex;
     flex-direction: row;
-    /* Force l'alignement en ligne de TOUTES les piles */
     flex-wrap: nowrap !important;
-    /* Interdit strictement le retour à la ligne */
     gap: 4px;
     justify-content: space-between;
-    /* Répartit les 5 piles uniformément dans la carte */
     width: 100%;
 }
 
 .score-pip {
     flex: 1;
-    /* Donne la même largeur exacte à chaque petit carré de score */
     padding: 4px 2px;
-    /* Légère réduction du padding interne pour que ça rentre */
     min-width: 40px;
 }
-
 
 .player-indicator {
 display: flex;
@@ -147,6 +135,7 @@ align-items: center;
 gap: 10px;
 flex: 1;
 }
+
 .pion-dot {
 width: 22px; height: 22px;
 border-radius: 50%;
@@ -168,7 +157,6 @@ line-height: 1.4;
 }
 .phase-label strong { color: var(--text); display: block; font-size: 1.05rem; }
 
-/* BOARD */
 .board-wrap {
 position: relative;
 margin-bottom: 14px;
@@ -188,7 +176,7 @@ box-shadow: 0 6px 28px rgba(0,0,0,0.4);
 .cell {
 position: relative;
 border-radius: 6px;
-background: rgba(245, 230, 200, 0.75);
+/* background: rgba(245, 230, 200, 0.75); */
 cursor: default;
 transition: background 0.15s, transform 0.1s;
 display: flex;
@@ -214,7 +202,6 @@ box-shadow: 0 0 0 2px #b08040, 0 0 14px rgba(180,130,40,0.5);
 .cell.valid-stack:hover { background: rgba(160, 195, 230, 0.95); }
 .cell.cant-stack { opacity: 0.45; }
 
-/* STACK VISUAL */
 .tile-stack {
 position: absolute;
 width: 76px;
@@ -229,6 +216,13 @@ font-size: 1rem;
 font-weight: bold;
 transition: all 0.2s ease;
 pointer-events: none;
+}
+
+.tile-stack.h1 {
+background-color: rgb(245, 230, 200);
+color: #5c3a21;
+box-shadow: 0 4px 0 rgb(155, 149, 138);
+transform: translateY(-4px);
 }
 
 .tile-stack.h2 {
@@ -256,7 +250,6 @@ box-shadow: 0 20px 0 #6d0307;
 transform: translateY(-20px);
 }
 
-/* PION */
 .pion {
 position: absolute;
 width: 30px; height: 30px;
@@ -348,7 +341,6 @@ letter-spacing: 0.04em;
 font-family: sans-serif;
 }
 
-/* ACTION BUTTONS */
 .actions {
 display: flex;
 gap: 10px;
@@ -374,7 +366,6 @@ box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 .btn.danger { border-color: rgba(150,40,40,0.35); }
 .btn.danger:hover { background: rgba(255,220,200,0.9); border-color: #c83030; color: #8a1010; }
 
-/* RULES */
 summary {
 cursor: pointer;
 color: var(--gold);
@@ -391,7 +382,6 @@ details, details * {
     font-family: 'Akaya Kanadaka', cursive;
 }
 
-/* MODAL */
 .modal-overlay {
 display: none;
 position: fixed;
@@ -448,8 +438,6 @@ font-family: sans-serif;
 }
 .modal p strong { color: var(--text); }
 .modal .btn { font-size: 1.2rem; padding: 12px 20px; }
-
-/* DISPOSITION HORIZONTALE DES SCORES ET DU PLATEAU  */
 
 .jeu-container {
     display: flex;

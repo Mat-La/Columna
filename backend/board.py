@@ -1,7 +1,4 @@
-# Gère le plateau de jeu
-# Deplacements + verifications des coups possibles
-
-# NOTE : case de 100 x 100 pixels + 10 de bordures,
+import pygame
 
 class Board:
     def __init__(self, screen=None):
@@ -9,8 +6,7 @@ class Board:
         self.dalles = []
         self.white_pawns = []
         self.black_pawns = []
-        
-        # ⚠️ MODIFICATION : L'initialisation doit se faire même sans écran !
+
         for i in range(6):
             self.dalles.append([])
             for j in range(6):
@@ -18,8 +14,15 @@ class Board:
 
         self.white_pawns = [(2, 0), (2, 3), (0, 5), (5, 4)]
         self.black_pawns = [(0, 1), (3, 2), (3, 5), (5, 0)]
+        
+        if self.screen:
+            self.board_image = pygame.image.load("img/board.jpg")
+            self.dalle_images = [
+                pygame.image.load(f"img/dalle{i}.jpg") for i in range(1, 6)
+            ]
+            self.black_pawns_image = pygame.image.load("img/pion_noir.png")
+            self.white_pawns_image = pygame.image.load("img/pion_blanc.png")
 
-    # une fonction display -> affiche le plateau, dalles et pion
     def display(self):
         self.screen.blit(self.board_image, (0, 0))
         for y in range(len(self.dalles)):
@@ -33,7 +36,6 @@ class Board:
         for i in self.black_pawns:
             self.screen.blit(self.black_pawns_image, (35+100*i[1], 35+100*i[0]))
 
-    # une sous fonction qui vérifie la possibilité du mouvement
     def available_mouv(self, begin, end, color_turn):
         if self.dalles[end[0]][end[1]] == 0: return False
         if end in self.white_pawns or end in self.black_pawns: return False
@@ -260,44 +262,3 @@ class Board:
                 open_list.append((nouveau_f, nouveau_g, voisin, path + [voisin]))
         
         return -1
-    
-
-
-# if __name__ == "__main__":
-#     import pygame
-
-#     pygame.init()
-#     screen = pygame.display.set_mode((640, 640))
-#     b = Board(screen)
-
-#     # Affiche le plateau pour vérifier
-#     print("Dalles initiales:")
-#     for row in b.dalles:
-#         print(row)
-#     print("Pions blancs:", b.white_pawns)
-#     print("Pions noirs:", b.black_pawns)
-#     print()
-
-#     # position de départ avec les pions TODO faut vérifier avec le plateau les résulatats.
-#     # print(f"(0,0) -> (0,3) : {b.A_Star((0, 0), (0, 3))}")
-#     # print(f"(0,0) -> (3,0) : {b.A_Star((0, 0), (3, 0))}")
-#     # print(f"(0,0) -> (3,3) : {b.A_Star((0, 0), (3, 3))}")
-#     # print(f"(0,0) -> (0,0) : {b.A_Star((0, 0), (0, 0))}")
-
-
-#     # Sans les pions
-#     b.white_pawns = []
-#     b.black_pawns = []
-#     print(f"Sans pions, (0,0) -> (0,3) : {b.A_Star((0,0), (0,3))}")  # 3
-#     print(f"Sans pions, (0,0) -> (3,0) : {b.A_Star((0,0), (3,0))}")  # 3
-#     print(f"Sans pions, (0,0) -> (3,3) : {b.A_Star((0,0), (3,3))}")  # 6
-
-#     # Test blocage total -1 
-#     b3 = Board(screen)
-#     b3.white_pawns = []
-#     b3.black_pawns = []
-#     b3.white_pawns = [(3,2), (3,4), (2,3), (4,3)]
-#     print(f"Destination bloquee par pions (0,0) -> (3,3) : {b3.A_Star((0,0), (3,3))}")  # -1
-
-
-#     pygame.quit()

@@ -1,34 +1,28 @@
-// ========== WEBSOCKET & RÉSEAU ==========
-let myRole = null; // Stockera 'white', 'black', ou 'spectator'
-// 1. 🔒 Création de la "Carte d'Identité" (elle survit au rafraîchissement F5)
+// Rôle des joueurs
+let myRole = null;
 let playerId = sessionStorage.getItem("columna_player_id");
 if (!playerId) {
-  // S'il n'en a pas, on lui crée un ID aléatoire
   playerId = Math.random().toString(36).substring(2, 15);
   sessionStorage.setItem("columna_player_id", playerId);
 }
-// 1. On récupère l'ID de la partie dans l'URL (ex: ?room=A8F3K)
+
 const urlParams = new URLSearchParams(window.location.search);
 const roomID = urlParams.get("room");
 document.getElementById("room-display").textContent = roomID;
-const mode = urlParams.get("mode") || "multi"; // "multi" par défaut si pas précisé
-// Si quelqu'un arrive sur la page sans ID, on le renvoie à l'accueil
+const mode = urlParams.get("mode") || "multi";
 if (!roomID) {
   alert("Aucune partie trouvée. Retour à l'accueil.");
   window.location.href = "index.html";
 }
 
-// 2. On ouvre la connexion vers le serveur Python
-const socket = new WebSocket(
-  `ws://${window.location.hostname}:8000/ws/${roomID}?mode=${mode}&player_id=${playerId}`,
-);
+// Connexion vers le serveur Python
+const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}&player_id=${playerId}`);
 
 socket.onopen = function () {
   console.log(`Connecté au serveur Python sur le salon : ${roomID}`);
 };
 
 socket.onmessage = function (event) {
-  // On traduit le texte JSON reçu en objet JavaScript
   const response = JSON.parse(event.data);
   console.log("Mise à jour reçue du serveur :", response);
 
@@ -54,7 +48,44 @@ socket.onmessage = function (event) {
       document.getElementById("disconnect-modal").classList.add("show");
     }
     return;
-  } else if (response.status === "victory_by_abandon") {
+  } else if (response.status === "victory") {
+    gameOver = true;
+    updateStatusBar();
+
+    const btnAbandon = document.getElementById("btn-abandon");
+    if (btnAbandon) {
+      btnAbandon.disabled = true;
+      btnAbandon.style.opacity = "0.5";
+      btnAbandon.style.cursor = "not-allowed";
+    }
+
+    const endModal = document.getElementById("end-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalBody = document.getElementById("modal-body");
+
+    if (endModal && modalTitle && modalBody) {
+      modalTitle.innerText = "Partie terminée";
+
+      if (myRole === "spectator") {
+        if (response.winner === "white") {
+          modalBody.innerHTML = "Les Blancs remportent la partie !";
+        } else {
+          modalBody.innerHTML = "Les Noirs remportent la partie !";
+        }
+      } else if (myRole === response.winner) {
+        modalTitle.style.color = "var(--gold)";
+        modalBody.innerHTML =
+          "<strong>Victoire</strong>";
+      } else {
+        modalBody.innerHTML =
+          "<strong>Défaite</strong>";
+      }
+      endModal.classList.add("show");
+    }
+
+    socket.close();
+    return;
+  }else if (response.status === "victory_by_abandon") {
     gameOver = true;
     updateStatusBar();
 
@@ -120,27 +151,23 @@ socket.onmessage = function (event) {
     phase = serverState.phase;
     selectedCell = null;
 
-    // 1. On met à jour les dalles
+    // MAJ des dalles, des pions, des mouvs
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
         let h = serverState.dalles[r][c];
-        // Dans Python, 0 veut dire vide. Dans JS, null veut dire vide.
         board[r][c].height = h === 0 ? null : h;
-        board[r][c].pion = null; // On efface tous les pions provisoirement
+        board[r][c].pion = null;
       }
     }
 
-    // 2. On replace les pions blancs (d'après le serveur)
     for (const [r, c] of serverState.white_pawns) {
       board[r][c].pion = "white";
     }
 
-    // 3. On replace les pions noirs (d'après le serveur)
     for (const [r, c] of serverState.black_pawns) {
       board[r][c].pion = "black";
     }
 
-    // 4. Mettre à jour les derniers mouvements depuis le serveur
     if (serverState.last_pion_move) {
       lastPionMove = {
         from: serverState.last_pion_move.from,
@@ -154,17 +181,12 @@ socket.onmessage = function (event) {
       };
     }
 
-    // 5. On redessine l'interface
     render();
   }
 };
 
-// ... (la suite de ton app.js ne bouge pas pour l'instant)
-// ========== ÉTAT DU JEU ==========
 const BOARD_SIZE = 6;
 const MAX_PILE = 5;
-
-// Position initiale des pions (figure 1)
 const INITIAL_PIONS = {
   white: [
     [2, 0],
@@ -183,10 +205,10 @@ const INITIAL_PIONS = {
 let board = []; // board[r][c] = { height: 0-5 ou null (case vide), pion: null|'white'|'black' }
 let currentPlayer = "white";
 let phase = "move"; // 'move' | 'stack'
-let selectedCell = null; // {r, c}
+let selectedCell = null;
 let gameOver = false;
-let lastPionMove = null; // {from: [r,c], to: [r,c]}
-let lastStackMove = null; // {from: [r,c], to: [r,c]}
+let lastPionMove = null;
+let lastStackMove = null;
 
 function initBoard() {
   board = [];
@@ -199,8 +221,6 @@ function initBoard() {
   for (const [r, c] of INITIAL_PIONS.white) board[r][c].pion = "white";
   for (const [r, c] of INITIAL_PIONS.black) board[r][c].pion = "black";
 }
-
-// ========== LOGIQUE ==========
 
 function getOrthNeighbors(r, c) {
   return [
@@ -215,7 +235,7 @@ function getOrthNeighbors(r, c) {
     );
 }
 
-// Pour un pion en (r,c), retourne les cases valides de destination
+// Renvoie les cases valides pour un pion en coordonnés (r,c)
 function validMoveTargets(r, c) {
   const dirs = [
     [-1, 0],
@@ -230,9 +250,8 @@ function validMoveTargets(r, c) {
     while (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
       const cell = board[nr][nc];
       if (cell.height !== null) {
-        // première pile rencontrée
         if (cell.pion === null) targets.push([nr, nc]);
-        break; // on s'arrête toujours sur la première pile
+        break;
       }
       nr += dr;
       nc += dc;
@@ -241,7 +260,7 @@ function validMoveTargets(r, c) {
   return targets;
 }
 
-// Pour une pile sans pion en (r,c), retourne les cases valides d'empilement
+// Renvoie les cases valides pour un pile vide en coordonnés (r,c)
 function validStackTargets(r, c) {
   const dirs = [
     [-1, 0],
@@ -256,7 +275,6 @@ function validStackTargets(r, c) {
     while (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
       const cell = board[nr][nc];
       if (cell.height !== null) {
-        // première pile rencontrée
         if (
           cell.pion === null &&
           cell.height + board[r][c].height <= MAX_PILE
@@ -288,8 +306,6 @@ function canCurrentPlayerStack() {
   return false;
 }
 
-// ========== RENDU ==========
-
 function render() {
   const boardEl = document.getElementById("board");
   boardEl.innerHTML = "";
@@ -311,14 +327,12 @@ function render() {
         stackEl.textContent = cell.height;
         el.appendChild(stackEl);
 
-        // Pion — décalé selon ombre 3D
         if (cell.pion) {
           const pionEl = document.createElement("div");
           pionEl.className = `pion ${cell.pion} pion-h${cell.height}`;
           el.appendChild(pionEl);
         }
 
-        // Interactions
         if (!gameOver) applyInteractions(el, r, c, cell);
       }
 
@@ -329,9 +343,7 @@ function render() {
   updateStatusBar();
   updateScores();
   drawArrows();
-  //   document.getElementById("btn-cancel").style.display = selectedCell
-  //     ? "block"
-  //     : "none";
+  //   document.getElementById("btn-cancel").style.display = selectedCell? "block": "none";
 }
 
 function applyInteractions(el, r, c, cell) {
@@ -340,7 +352,6 @@ function applyInteractions(el, r, c, cell) {
   }
   if (phase === "move") {
     if (selectedCell === null) {
-      // Sélectionner un pion du joueur courant
       if (cell.pion === currentPlayer && validMoveTargets(r, c).length > 0) {
         el.classList.add("clickable", "selected-ready");
         el.addEventListener("click", () => selectPion(r, c));
@@ -358,7 +369,6 @@ function applyInteractions(el, r, c, cell) {
           el.classList.add("valid-move", "clickable");
           el.addEventListener("click", () => movePion(sr, sc, r, c));
         } else {
-          // clic sur une case non valide → désélectionner
           el.classList.add("clickable");
           el.addEventListener("click", cancelSelection);
         }
@@ -366,7 +376,6 @@ function applyInteractions(el, r, c, cell) {
     }
   } else if (phase === "stack") {
     if (selectedCell === null) {
-      // Sélectionner une pile sans pion
       if (cell.pion === null && validStackTargets(r, c).length > 0) {
         el.classList.add("clickable");
         el.addEventListener("click", () => selectStack(r, c));
@@ -386,7 +395,6 @@ function applyInteractions(el, r, c, cell) {
           el.classList.add("valid-stack", "clickable");
           el.addEventListener("click", () => stackTiles(sr, sc, r, c));
         } else {
-          // clic sur une case non valide → désélectionner
           el.classList.add("clickable");
           el.addEventListener("click", cancelSelection);
         }
@@ -395,10 +403,7 @@ function applyInteractions(el, r, c, cell) {
   }
 }
 
-// ========== DESSINER LES FLÈCHES ==========
-
 function drawArrows() {
-  // On crée ou récupère le conteneur SVG pour les flèches
   let svgContainer = document.getElementById("arrows-svg");
   if (!svgContainer) {
     const boardWrap = document.querySelector(".board-wrap");
@@ -416,28 +421,22 @@ function drawArrows() {
     boardWrap.appendChild(svgContainer);
   }
 
-  // On nettoie les flèches précédentes
   svgContainer.innerHTML = "";
 
-  // Dimensions d'une cellule (doit correspondre au CSS)
   const cellSize = 82;
   const gap = 4;
   const cellWithGap = cellSize + gap;
   const boardPadding = 8;
 
-  // Fonction pour calculer la position du centre d'une cellule
   function getCellCenter(r, c) {
     const x = boardPadding + c * cellWithGap + cellSize / 2;
     const y = boardPadding + r * cellWithGap + cellSize / 2;
     return { x, y };
   }
 
-  // Fonction pour dessiner une flèche
   function drawArrow(from, to, color, markerId, strokeDasharray = null) {
     const start = getCellCenter(from[0], from[1]);
     const end = getCellCenter(to[0], to[1]);
-
-    // Ligne
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", start.x);
     line.setAttribute("y1", start.y);
@@ -452,10 +451,7 @@ function drawArrows() {
     svgContainer.appendChild(line);
   }
 
-  // Définition des marqueurs de flèche (une pour chaque couleur)
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-
-  // Marqueur pour flèche pion (bleu)
   const markerPion = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "marker",
@@ -475,7 +471,6 @@ function drawArrows() {
   markerPion.appendChild(polygonPion);
   defs.appendChild(markerPion);
 
-  // Marqueur pour flèche dalle (orange)
   const markerStack = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "marker",
@@ -497,12 +492,10 @@ function drawArrows() {
 
   svgContainer.appendChild(defs);
 
-  // Dessiner la flèche du dernier mouvement de pion en bleu
   if (lastPionMove) {
     drawArrow(lastPionMove.from, lastPionMove.to, "#4A90E2", "arrowhead-pion");
   }
 
-  // Dessiner la flèche du dernier mouvement de dalle en orange tiretée
   if (lastStackMove) {
     drawArrow(
       lastStackMove.from,
@@ -513,7 +506,6 @@ function drawArrows() {
     );
   }
 
-  // Définir les bonnes dimensions du SVG
   svgContainer.setAttribute(
     "width",
     boardPadding * 2 + BOARD_SIZE * cellWithGap,
@@ -524,33 +516,26 @@ function drawArrows() {
   );
 }
 
-// ========== ACTIONS ==========
-
 function selectPion(r, c) {
   selectedCell = { r, c };
   render();
 }
 
 function movePion(fr, fc, tr, tc) {
-  // 1. On prépare le message JSON pour le serveur
   const message = {
     action: "move",
     from: [fr, fc],
     to: [tr, tc],
   };
 
-  // 2. On l'envoie via WebSocket (transformé en texte JSON)
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(message));
   }
 
-  // --- Le reste de ton code local existant ---
   board[tr][tc].pion = board[fr][fc].pion;
   board[fr][fc].pion = null;
   selectedCell = null;
   phase = "stack";
-
-  // Enregistrer le dernier mouvement de pion
   lastPionMove = { from: [fr, fc], to: [tr, tc] };
 
   if (!canCurrentPlayerStack()) {
@@ -566,7 +551,6 @@ function selectStack(r, c) {
 }
 
 function stackTiles(fr, fc, tr, tc) {
-  // 1. On informe le serveur de l'empilement
   const message = {
     action: "stack",
     from: [fr, fc],
@@ -577,13 +561,10 @@ function stackTiles(fr, fc, tr, tc) {
     socket.send(JSON.stringify(message));
   }
 
-  // --- Le reste de ton code existant ---
   board[tr][tc].height += board[fr][fc].height;
   board[fr][fc].height = null;
   board[fr][fc].pion = null;
   selectedCell = null;
-
-  // Enregistrer le dernier mouvement de dalle
   lastStackMove = { from: [fr, fc], to: [tr, tc] };
 
   nextTurn();
@@ -610,7 +591,6 @@ function copierID() {
     navigator.clipboard
       .writeText(roomID)
       .then(() => {
-        // Optionnel : un petit effet visuel pour montrer que c'est copié
         const badge = document.getElementById("room-badge-click");
         const originalText = badge.innerHTML;
         badge.innerHTML = "Copié !";
@@ -643,7 +623,6 @@ function abandonnerPartie() {
   const modalAbandon = document.getElementById("abandon-modal");
   if (modalAbandon) {
     modalAbandon.classList.add("show");
-    //console.log("[Front-End] Ouverture du modal de confirmation d'abandon.");
   }
 }
 
@@ -651,7 +630,6 @@ function fermerModalAbandon() {
   const modalAbandon = document.getElementById("abandon-modal");
   if (modalAbandon) {
     modalAbandon.classList.remove("show");
-    //console.log("[Front-End] Abandon annulé. Retour au jeu.");
   }
 }
 
@@ -682,24 +660,7 @@ function confirmerAbandonNetwork() {
       "[RÉSEAU] Impossible d'abandonner : le WebSocket est fermé !",
     );
   }
-
-  // const endModal = document.getElementById("end-modal");
-  // if (endModal) {
-  //   document.getElementById("modal-title").innerText = "Partie terminée";
-  //   document.getElementById("modal-body").innerHTML =
-  //     "Vous avez abandonné la partie.<br><strong>Défaite</strong>";
-  //   endModal.classList.add("show");
-  // }
-  // const btnAbandon = document.getElementById("btn-abandon");
-  // if (btnAbandon) {
-  //   btnAbandon.disabled = true;
-  //   btnAbandon.style.opacity = "0.5"; // Optionnel : donne un effet visuel grisé
-  //   btnAbandon.style.cursor = "not-allowed";
-  // }
-  // gameOver = true;
-  // updateStatusBar();
 }
-// ========== FIN DE PARTIE ==========
 
 function computeScore(color) {
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -711,7 +672,6 @@ function computeScore(color) {
 }
 
 function endGame() {
-  gameOver = true;
   const ws = computeScore("white");
   const bs = computeScore("black");
 
@@ -728,7 +688,6 @@ function endGame() {
     }
   }
   if (!winner) {
-    // tie-break : joueur qui ne peut plus jouer perd
     winner = currentPlayer === "white" ? "black" : "white";
     reason = "Égalité parfaite — le joueur bloqué perd";
   }
@@ -743,9 +702,14 @@ function endGame() {
   document.getElementById("modal-title").textContent = "Partie terminée";
   document.getElementById("modal-body").innerHTML = res;
   document.getElementById("end-modal").classList.add("show");
-}
 
-// ========== UI ==========
+  const btnAbandon = document.getElementById("btn-abandon");
+    if (btnAbandon) {
+      btnAbandon.disabled = true;
+      btnAbandon.style.opacity = "0.5";
+      btnAbandon.style.cursor = "not-allowed";
+    }
+}
 
 function updateStatusBar() {
   const dot = document.getElementById("current-pion-dot");
@@ -781,12 +745,8 @@ function updateScores() {
       const pip = document.createElement("div");
       pip.className = "score-pip";
       pip.innerHTML = `<span class="score-pip-num">${counts[h]}</span><span class="score-pip-label">pile${h}</span>`;
-      // if (counts[h] > 0)
-      //   pip.style.background =
-      //     h === 5 ? "#2a3a1a" : h === 4 ? "#1a2a3a" : "var(--surface2)";
       breakdown.appendChild(pip);
     }
-    // Active player highlight
     const card = document.getElementById(`score-${color}`);
     card.classList.toggle(
       "active-player",
@@ -819,6 +779,5 @@ function restartGame() {
   render();
 }
 
-// ========== INIT ==========
 initBoard();
 //render();

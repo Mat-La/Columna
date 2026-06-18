@@ -49,8 +49,7 @@ class Player:
         board2 = board.copy()
         _, self.action = self.tour_max(board2, -10000, 10000, PROFONDEUR)
         self.is_calculating = False
-        
-        # 💥 AJOUTE CETTE LIGNE : On doit renvoyer l'action pour le serveur Web !
+        print(self.action)
         return self.action
     
 
@@ -59,53 +58,37 @@ class Player:
             return (self.eval2(board), None)
 
         all_moves_possible = board.get_all_pawns_move(self.color)
-        len50 = 50/len(all_moves_possible)
         u = None
         a = None
-        i = -1
         for move in all_moves_possible:
-            if profondeur == PROFONDEUR:
-                # print(f"move {i} / {len(all_moves_possible)}")
-                i+=1
-            # vboard = board.copy()
             board.move(move[0], move[1])
             all_stacks_possible = board.get_all_slabs_stack()
             if not all_stacks_possible:
                 res = board.get_result()
                 if res == self.color:
-                    u = 10000
-                elif res == "draw":
-                    u = 0
+                    u_min = 10000
                 else:
-                    u = -10000
+                    u_min = -10000
                 if u == None or u_min > u:
                     a = (move, None)
                     u = u_min
                 if u >= beta:
                     board.undo_move(move[0], move[1])
                     return (u, a)
-                alpha = max(alpha, u)  
-            j=0
-            for stack in all_stacks_possible:
-                if profondeur == PROFONDEUR:
-                    percent = round(len50*i + len50 * j / len(all_stacks_possible))
-                    bar = "\r|" 
-                    for _ in range(percent): bar += "=" 
-                    for _ in range(50-percent): bar += " " 
-                    print(bar+"|", end='')
-                    j += 1
-                # vvboard = vboard.copy()
-                nb_dalles = board.move(stack[0], stack[1])
-                u_min, _ = self.tour_min(board, alpha, beta, profondeur-1)
-                board.undo_move(stack[0], stack[1], nb_dalles)
-                if u == None or u_min > u:
-                    a = (move, stack)
-                    u = u_min
-                if u >= beta:
-                    board.undo_move(move[0], move[1])
-                    return (u, a)
                 alpha = max(alpha, u)
-            board.undo_move(move[0], move[1])
+            else:
+                for stack in all_stacks_possible:
+                    nb_dalles = board.move(stack[0], stack[1])
+                    u_min, _ = self.tour_min(board, alpha, beta, profondeur-1)
+                    board.undo_move(stack[0], stack[1], nb_dalles)
+                    if u == None or u_min > u:
+                        a = (move, stack)
+                        u = u_min
+                    if u >= beta:
+                        board.undo_move(move[0], move[1])
+                        return (u, a)
+                    alpha = max(alpha, u)
+                board.undo_move(move[0], move[1])
         return (u, a)
 
 
@@ -120,17 +103,16 @@ class Player:
         u = None
         a = None
         for move in all_moves_possible:
-            # vboard = board.copy()
             board.move(move[0], move[1])
             all_stacks_possible = board.get_all_slabs_stack()
             if not all_stacks_possible:
                 res = board.get_result()
                 if res == self.color:
-                    u = 10000
+                    u_max = 10000
                 elif res == "draw":
-                    u = 0
+                    u_max = 0
                 else:
-                    u = -10000
+                    u_max = -10000
                 if u == None or u_max < u:
                     a = (move, None)
                     u = u_max
@@ -139,7 +121,6 @@ class Player:
                     return (u, a)
                 beta = min(beta, u)
             for stack in all_stacks_possible:
-                # vvboard = vboard.copy()
                 nb_dalles = board.move(stack[0], stack[1])
                 u_max, _ = self.tour_max(board, alpha, beta, profondeur-1)
                 board.undo_move(stack[0], stack[1], nb_dalles)

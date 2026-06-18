@@ -1,9 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. On pointe vers un salon factice appelé "ping" pour réveiller le serveur
-  const RENDER_WS_URL = "wss://columna.onrender.com/ws/ping"; 
-
+  const RENDER_WS_URL = "wss://columna.onrender.com/ws/ping";
   const checkSocket = new WebSocket(RENDER_WS_URL);
-
   const banner = document.getElementById("server-status-banner");
   const bannerText = document.getElementById("server-status-text");
 
@@ -15,11 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       setTimeout(() => {
         banner.classList.add("hidden-soft");
-        
-        // 2. NOUVEAU : On referme la connexion proprement pour ne pas 
-        // laisser un "joueur fantôme" dans le salon "ping" sur le serveur
-        checkSocket.close(); 
-        
+        checkSocket.close();
       }, 2000);
     }
   };
@@ -32,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// Fonction pour générer un ID unique aléatoire (ex: 8x3f9a)
 function generateRoomID() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -67,13 +59,13 @@ function joinRoom(event) {
   return false;
 }
 
-// 1. Créer une partie
+// Créer une partie
 document.getElementById("btn-creer").addEventListener("click", function () {
   const roomID = generateRoomID();
   window.location.href = `game.html?room=${roomID}`;
 });
 
-// 2. Rejoindre une partie
+// Rejoindre une partie
 document.getElementById("btn-rejoindre").addEventListener("click", function () {
   joinInput.type = "text";
   submitButton.classList.add("visible");
@@ -84,7 +76,7 @@ document.getElementById("btn-rejoindre").addEventListener("click", function () {
 joinInput.addEventListener("input", resetHideJoinInputTimer);
 joinInput.addEventListener("focus", resetHideJoinInputTimer);
 
-// 3. Jouer contre l'IA
+// Jouer contre l'IA
 document.getElementById("btn-ia").addEventListener("click", function () {
   const roomID = generateRoomID();
   window.location.href = `game.html?room=${roomID}&mode=ia`;
