@@ -31,13 +31,22 @@ def get_board_state(partie):
 # ⏱️ LE CHRONOMÈTRE D'ABANDON (60 SECONDES)
 # ==========================================
 async def abandon_timer(room_id, disconnected_role):
+    # 1. 🚨 On prévient l'adversaire IMMÉDIATEMENT depuis cette tâche sécurisée
+    if room_id in parties:
+        for client in parties[room_id]["clients"]:
+            try:
+                await client.send_json({"status": "opponent_disconnected"})
+            except Exception:
+                pass
+                
     try:
-        await asyncio.sleep(60) # On patiente 1 minute
+        # 2. ⏱️ On patiente 1 minute
+        await asyncio.sleep(60) 
         
-        # Si on arrive ici, c'est que les 60s sont passées et que la tâche n'a pas été annulée !
+        # 3. 🏁 Si on arrive ici, les 60s sont écoulées, forfait !
         if room_id in parties:
             winner = "black" if disconnected_role == "white" else "white"
-            parties[room_id]["phase"] = "game_over" # On bloque la partie
+            parties[room_id]["phase"] = "game_over" 
             
             new_state = {
                 "status": "victory_by_abandon",
@@ -45,14 +54,13 @@ async def abandon_timer(room_id, disconnected_role):
                 "message": f"Victoire par forfait ! Les {disconnected_role}s ont fui le combat."
             }
             
-            # On prévient l'adversaire resté dans le salon
             for client in parties[room_id]["clients"]:
                 try:
                     await client.send_json(new_state)
-                except:
+                except Exception:
                     pass
     except asyncio.CancelledError:
-        # 🛑 Cette exception est déclenchée si on annule manuellement le chrono (le joueur est revenu)
+        # 🛑 Cette exception est déclenchée si on annule le chrono (le joueur est revenu)
         pass
 
 @app.websocket("/ws/{room_id}")
@@ -166,9 +174,15 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                         for client in p["clients"]:
                             await client.send_json(new_state_ia)
 
+# ... (Ceci est la fin de la boucle "while True:" et des actions du joueur)
+
     except Exception as e:
+        # On ignore les erreurs classiques de la boucle
+        pass
+        
+    finally:
         # ==========================================
-        # 🔌 QUAND UN CÂBLE SE DÉBRANCHE
+        # 🔌 QUAND UN CÂBLE SE DÉBRANCHE (Même si on ferme l'onglet d'un coup)
         # ==========================================
         if websocket in p["clients"]:
             p["clients"].remove(websocket)
@@ -181,13 +195,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
             disc_role = "black"
             p["ws_black"] = None
             
-        # Si c'est un vrai joueur qui part (pas un spectateur)
+        # Si c'est un vrai joueur qui vient de partir
         if disc_role:
-            # 1. On prévient l'adversaire
-            for client in p["clients"]:
-                try:
-                    await client.send_json({"status": "opponent_disconnected"})
-                except:
-                    pass
-            # 2. ⏱️ ON LANCE LE CHRONO !
+            # 🚀 On délègue tout le travail à la nouvelle tâche (qui survit à la fermeture)
             p[f"task_{disc_role}"] = asyncio.create_task(abandon_timer(room_id, disc_role))
