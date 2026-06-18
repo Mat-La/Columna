@@ -150,27 +150,38 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
 
         while True:
             data = await websocket.receive_json()
-            
-            if p["turn"] == "white" and websocket != p.get("ws_white"): continue
-            if p["turn"] == "black" and websocket != p.get("ws_black"): continue
-            if p["phase"] == "game_over": continue 
 
-            if data["action"] == "abandon":
+            if data.get("action") == "abandon":
                 p["phase"] = "game_over"
                 abandon_role = data.get("role")
                 winner = "black" if abandon_role == "white" else "white"
-                
+                print(f"[SERVEUR] Abandon reçu de {abandon_role}. Vainqueur : {winner}")
+
                 new_state = {
                     "status": "victory_by_abandon",
                     "winner": winner,
                 }
-                for client in p["clients"]:
-                    if websocket == client:
-                        continue
+                for client in list(p["clients"]):
                     try:
                         await client.send_json(new_state)
-                    except Exception:
-                        pass
+                        if client != websocket:
+                            await client.close()
+                    except Exception as e:
+                        print(f"[SERVEUR] Erreur d'envoi abandon à un client : {e}")
+
+                await asyncio.sleep(0.2)
+
+                if room_id in parties:
+                    del parties[room_id]
+                    print(f"[SERVEUR] Room {room_id} purgée de la mémoire.")
+
+                break
+
+            if p["phase"] == "game_over":
+                continue
+            if p["turn"] == "white" and websocket != p.get("ws_white"):
+                continue
+            if p["turn"] == "black" and websocket != p.get("ws_black"):
                 continue
                 
             if data["action"] in ["move", "stack"]:

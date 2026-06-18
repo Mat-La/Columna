@@ -19,7 +19,9 @@ if (!roomID) {
 }
 
 // 2. On ouvre la connexion vers le serveur Python
-const socket = new WebSocket(`wss://columna.onrender.com/ws/${roomID}?mode=${mode}&player_id=${playerId}`);
+const socket = new WebSocket(
+  `ws://${window.location.hostname}:8000/ws/${roomID}?mode=${mode}&player_id=${playerId}`,
+);
 
 socket.onopen = function () {
   console.log(`Connecté au serveur Python sur le salon : ${roomID}`);
@@ -30,30 +32,36 @@ socket.onmessage = function (event) {
   const response = JSON.parse(event.data);
   console.log("Mise à jour reçue du serveur :", response);
 
-
   if (response.status === "opponent_disconnected") {
     if (myRole !== "spectator") {
-      document.getElementById("phase-title").textContent = "L'adversaire est déconnecté";
-      document.getElementById("phase-desc").textContent = "Attendre 30 secondes";
-      document.getElementById("disconnect-title").textContent = "Votre adversaire a été déconnecté !";
-      document.getElementById("disconnect-body").textContent = "S'il ne revient pas d'ici 30 secondes, vous remportez la partie";
+      document.getElementById("phase-title").textContent =
+        "L'adversaire est déconnecté";
+      document.getElementById("phase-desc").textContent =
+        "Attendre 30 secondes";
+      document.getElementById("disconnect-title").textContent =
+        "Votre adversaire a été déconnecté !";
+      document.getElementById("disconnect-body").textContent =
+        "S'il ne revient pas d'ici 30 secondes, vous remportez la partie";
       document.getElementById("disconnect-modal").classList.add("show");
     }
     return;
   } else if (response.status === "opponent_reconnected") {
     if (myRole !== "spectator") {
-      document.getElementById("disconnect-title").textContent = "Votre adversaire est de retour !";
-      document.getElementById("disconnect-body").textContent = "Le combat reprend";
+      document.getElementById("disconnect-title").textContent =
+        "Votre adversaire est de retour !";
+      document.getElementById("disconnect-body").textContent =
+        "Le combat reprend";
       document.getElementById("disconnect-modal").classList.add("show");
     }
     return;
   } else if (response.status === "victory_by_abandon") {
     gameOver = true;
     updateStatusBar();
+
     const btnAbandon = document.getElementById("btn-abandon");
     if (btnAbandon) {
       btnAbandon.disabled = true;
-      btnAbandon.style.opacity = "0.5"; // Optionnel : donne un effet visuel grisé
+      btnAbandon.style.opacity = "0.5";
       btnAbandon.style.cursor = "not-allowed";
     }
 
@@ -61,19 +69,35 @@ socket.onmessage = function (event) {
     const modalTitle = document.getElementById("modal-title");
     const modalBody = document.getElementById("modal-body");
 
+    if (myRole === response.winner) {
+      modalBody.innerHTML =
+        "Votre adversaire a fui !<br><strong>Victoire par forfait</strong>";
+    } else {
+      modalBody.innerHTML =
+        "Vous avez abandonné la partie.<br><strong>Défaite enregistrée</strong>";
+    }
+
     if (endModal && modalTitle && modalBody) {
+      modalTitle.innerText = "Partie terminée";
+
       if (myRole === "spectator") {
         if (response.winner === "white") {
-          modalBody.innerHTML = "Les Blancs remportent la partie !";
+          modalBody.innerHTML = "Les Blancs remportent la partie par forfait !";
         } else {
-          modalBody.innerHTML = "Les Noirs remportent la partie !";
+          modalBody.innerHTML = "Les Noirs remportent la partie par forfait !";
         }
+      } else if (myRole === response.winner) {
+        modalTitle.style.color = "var(--gold)";
+        modalBody.innerHTML =
+          "Votre adversaire a fui !<br><strong>Victoire par forfait</strong>";
       } else {
         modalBody.innerHTML =
-          "Votre adversaire a fui !<br><strong>Victoire</strong>";
+          "Vous avez abandonné la partie.<br><strong>Défaite</strong>";
       }
       endModal.classList.add("show");
     }
+
+    socket.close();
     return;
   }
 
@@ -305,9 +329,9 @@ function render() {
   updateStatusBar();
   updateScores();
   drawArrows();
-  document.getElementById("btn-cancel").style.display = selectedCell
-    ? "block"
-    : "none";
+  //   document.getElementById("btn-cancel").style.display = selectedCell
+  //     ? "block"
+  //     : "none";
 }
 
 function applyInteractions(el, r, c, cell) {
@@ -632,7 +656,6 @@ function fermerModalAbandon() {
 }
 
 function confirmerAbandonNetwork() {
-  //console.log("[Front-End] Tentative d'abandon...");
   fermerModalAbandon();
 
   if (socket && socket.readyState === WebSocket.OPEN) {
@@ -640,29 +663,41 @@ function confirmerAbandonNetwork() {
       action: "abandon",
       role: myRole,
     };
-    socket.send(JSON.stringify(payloadAbandon));
-    //console.log("[RÉSEAU] Payload envoyé au serveur :", payloadAbandon);
-  } else {
-    // console.error(
-    //   "[RÉSEAU] Impossible d'abandonner : le WebSocket est fermé !",
-    // );
-  }
 
-  const endModal = document.getElementById("end-modal");
-  if (endModal) {
-    document.getElementById("modal-title").innerText = "Partie terminée";
-    document.getElementById("modal-body").innerHTML =
-      "Vous avez abandonné la partie.<br><strong>Défaite</strong>";
-    endModal.classList.add("show");
-  }
-  const btnAbandon = document.getElementById("btn-abandon");
+    const btnAbandon = document.getElementById("btn-abandon");
     if (btnAbandon) {
       btnAbandon.disabled = true;
-      btnAbandon.style.opacity = "0.5"; // Optionnel : donne un effet visuel grisé
+      btnAbandon.style.opacity = "0.5";
       btnAbandon.style.cursor = "not-allowed";
     }
-  gameOver = true;
-  updateStatusBar();
+
+    socket.send(JSON.stringify(payloadAbandon));
+
+    document.getElementById("modal-title").innerText = "Traitement...";
+    document.getElementById("modal-body").innerHTML =
+      "Enregistrement de l'abandon auprès du serveur...";
+    document.getElementById("end-modal").classList.add("show");
+  } else {
+    console.error(
+      "[RÉSEAU] Impossible d'abandonner : le WebSocket est fermé !",
+    );
+  }
+
+  // const endModal = document.getElementById("end-modal");
+  // if (endModal) {
+  //   document.getElementById("modal-title").innerText = "Partie terminée";
+  //   document.getElementById("modal-body").innerHTML =
+  //     "Vous avez abandonné la partie.<br><strong>Défaite</strong>";
+  //   endModal.classList.add("show");
+  // }
+  // const btnAbandon = document.getElementById("btn-abandon");
+  // if (btnAbandon) {
+  //   btnAbandon.disabled = true;
+  //   btnAbandon.style.opacity = "0.5"; // Optionnel : donne un effet visuel grisé
+  //   btnAbandon.style.cursor = "not-allowed";
+  // }
+  // gameOver = true;
+  // updateStatusBar();
 }
 // ========== FIN DE PARTIE ==========
 

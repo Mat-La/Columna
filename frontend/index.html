@@ -32,7 +32,7 @@
     </section>
     <section style="margin-top: 2%;">
         <form onsubmit="return joinRoom(event)" style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-            <input id="form-rejoindre" type="hidden">
+            <input id="form-rejoindre" type="hidden" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
             <button type="submit" class="btn brain" id="btn-submit-rejoindre">Rejoindre</button>
         </form>
     </section>
