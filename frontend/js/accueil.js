@@ -1,15 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const RENDER_WS_URL = "wss://columna.onrender.com"; // TODO Remplacer par l'URL de Render
+  // 1. On pointe vers un salon factice appelé "ping" pour réveiller le serveur
+  const RENDER_WS_URL = "wss://columna.onrender.com/ws/ping"; 
 
-  //console.log("[Network] Tentative de connexion au serveur Render...");
   const checkSocket = new WebSocket(RENDER_WS_URL);
 
   const banner = document.getElementById("server-status-banner");
   const bannerText = document.getElementById("server-status-text");
 
   checkSocket.onopen = () => {
-    //console.log("[Network] Serveur Render activé et connecté !");
-
     if (banner && bannerText) {
       banner.classList.remove("waiting");
       banner.classList.add("connected");
@@ -17,13 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       setTimeout(() => {
         banner.classList.add("hidden-soft");
-        console.log("[Front-End] Bandeau replié avec fluidité.");
+        
+        // 2. NOUVEAU : On referme la connexion proprement pour ne pas 
+        // laisser un "joueur fantôme" dans le salon "ping" sur le serveur
+        checkSocket.close(); 
+        
       }, 2000);
     }
   };
 
   checkSocket.onerror = (error) => {
-    //console.error("[Network] Erreur de liaison avec Render :", error);
     if (bannerText) {
       bannerText.innerText =
         "Impossible de joindre le serveur. Veuillez réessayer plus tard.";
