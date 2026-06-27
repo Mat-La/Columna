@@ -136,11 +136,11 @@ socket.onmessage = function (event) {
     if (response.role) {
       myRole = response.role;
       if (myRole === "white") {
-        document.getElementById("score-card-name-white").innerText +=
-          "\t(Vous)";
+        document.getElementById("score-card-name-white").innerText =
+          "Blancs\t(Vous)";
       } else if (myRole === "black") {
-        document.getElementById("score-card-name-black").innerText +=
-          "\t(Vous)";
+        document.getElementById("score-card-name-black").innerText =
+          "Noirs\t(Vous)";
       } else {
         document.getElementById("phase-title").innerText = "Spectateur";
         document.getElementById("btn-abandon").style.display = "none";
