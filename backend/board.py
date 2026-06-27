@@ -1,6 +1,5 @@
 class Board:
     def __init__(self, screen=None):
-        self.screen = screen
         self.dalles = []
         self.white_pawns = []
         self.black_pawns = []
@@ -12,27 +11,6 @@ class Board:
 
         self.white_pawns = [(2, 0), (2, 3), (0, 5), (5, 4)]
         self.black_pawns = [(0, 1), (3, 2), (3, 5), (5, 0)]
-        
-        if self.screen:
-            self.board_image = pygame.image.load("img/board.jpg")
-            self.dalle_images = [
-                pygame.image.load(f"img/dalle{i}.jpg") for i in range(1, 6)
-            ]
-            self.black_pawns_image = pygame.image.load("img/pion_noir.png")
-            self.white_pawns_image = pygame.image.load("img/pion_blanc.png")
-
-    def display(self):
-        self.screen.blit(self.board_image, (0, 0))
-        for y in range(len(self.dalles)):
-            for x in range(len(self.dalles[y])):
-                if self.dalles[y][x] == 0: continue
-                self.screen.blit(
-                    self.dalle_images[self.dalles[y][x]-1], (20 + 100 * x, 20 + 100 * y)
-                )
-        for i in self.white_pawns:
-            self.screen.blit(self.white_pawns_image, (35+100*i[1], 35+100*i[0]))
-        for i in self.black_pawns:
-            self.screen.blit(self.black_pawns_image, (35+100*i[1], 35+100*i[0]))
 
     def available_mouv(self, begin, end, color_turn):
         if self.dalles[end[0]][end[1]] == 0: return False
