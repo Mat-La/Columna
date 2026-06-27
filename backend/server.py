@@ -79,6 +79,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
         }
     
         if mode == "ia" and start_turn == "black":
+            await websocket.send_json({
+                "status": "sync",
+                "role": "white",
+                "state": get_board_state(parties[room_id])
+            })
             ia = parties[room_id]["ia"]
             le_board = parties[room_id]["board"]
             ia.take_action(le_board)
@@ -113,7 +118,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                     await client.send_json({"status": "opponent_reconnected"})
 
     if role == "spectator":
-        if mode == "ia":
+        if p["mode"] == "ia":
             if p["id_white"] is None:
                 role = "white"
                 p["ws_white"] = websocket
@@ -197,7 +202,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                 if len(all_moves) == 0:
                     winner = p["board"].get_result()
                     if winner == "draw":
-                        winner = p["turn"]
+                        winner = "white" if p["turn"] == "black" else "black"
                     new_state = {
                         "status": "victory",
                         "winner": winner,
@@ -218,12 +223,14 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                         if not stack_action:
                             parties[room_id]["phase"] = "game_over"
                             parties[room_id]["last_stack_move"] = None
+                            all_moves = []
                             
                         else:   
                             p["board"].move(stack_action[0], stack_action[1])
                             parties[room_id]["last_stack_move"] = {"from": list(stack_action[0]), "to": list(stack_action[1])}
-                        p["turn"] = "white"
-                        p["phase"] = "move"
+                            all_moves = le_board.get_all_pawns_move(p["turn"])
+                            p["turn"] = "white"
+                            p["phase"] = "move"
                         
                         new_state_ia = {
                             "status": "update",
@@ -231,6 +238,19 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, mode: str = "mu
                         }
                         for client in p["clients"]:
                             await client.send_json(new_state_ia)
+
+    
+                        if len(all_moves) == 0:
+                            winner = p["board"].get_result()
+                            if winner == "draw":
+                                winner = "white" if p["turn"] == "black" else "black"
+                            new_state = {
+                                "status": "victory",
+                                "winner": winner,
+                            }
+                            for client in p["clients"]:
+                                await client.send_json(new_state)
+
 
     except Exception as e:
         print("Erreur : ", e)
