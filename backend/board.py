@@ -167,7 +167,7 @@ class Board:
         current_white_stack = 0 
         current_black_stack = 0
 
-        for i in range(5,2, -1):
+        for i in range(5,1, -1):
             for white_position in self.white_pawns:
                 if self.dalles[white_position[0]][white_position[1]] == i: 
                     current_white_stack += 1 
