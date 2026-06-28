@@ -1,3 +1,5 @@
+let bannerGone = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   const RENDER_WS_URL = "wss://columna.onrender.com/ws/ping";
   const checkSocket = new WebSocket(RENDER_WS_URL);
@@ -13,6 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         banner.classList.add("hidden-soft");
         checkSocket.close();
+        setTimeout(() => {
+          bannerGone = true;
+        }, 500);
       }, 2000);
     }
   };
@@ -37,6 +42,18 @@ function hideJoinInput() {
   if (!joinInput.value.trim()) {
     joinInput.type = "hidden";
     submitButton.classList.remove("visible");
+    if (window.innerWidth <= 650) {
+      const formSection = joinInput.closest("section");
+      formSection.style.position = "";
+      formSection.style.top = "";
+      formSection.style.left = "";
+      formSection.style.transform = "";
+      formSection.style.width = "";
+      formSection.style.zIndex = "";
+      formSection.style.marginTop = "";
+      document.querySelector("details").style.marginTop = "";
+      document.getElementById("btn-ia").style.marginTop = "";
+    }
   }
 }
 
@@ -67,10 +84,28 @@ document.getElementById("btn-creer").addEventListener("click", function () {
 
 // Rejoindre une partie
 document.getElementById("btn-rejoindre").addEventListener("click", function () {
+  if (!bannerGone) return;
   joinInput.type = "text";
   submitButton.classList.add("visible");
   joinInput.focus();
   resetHideJoinInputTimer();
+
+  if (window.innerWidth <= 650) {
+    const rect = document
+      .getElementById("btn-rejoindre")
+      .getBoundingClientRect();
+    const formSection = joinInput.closest("section");
+    formSection.style.position = "absolute";
+    const bodyRect = document.body.getBoundingClientRect();
+    formSection.style.top = rect.bottom - bodyRect.top + 45 + "px";
+    formSection.style.left = "50%";
+    formSection.style.transform = "translateX(-50%)";
+    formSection.style.width = "90%";
+    formSection.style.zIndex = "10";
+    formSection.style.marginTop = "0";
+    const formHeight = 60;
+    document.getElementById("btn-ia").style.marginTop = formHeight + "px";
+  }
 });
 
 joinInput.addEventListener("input", resetHideJoinInputTimer);
